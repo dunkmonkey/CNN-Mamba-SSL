@@ -1,0 +1,29 @@
+# Fine-tuning Dataset Configuration
+
+_target_: src.data.datamodules.finetune_datamodule.FinetuneDataModule
+
+# Dataset paths
+data_root: ${data_dir}/微调数据集
+target_sr: 4000
+segment_length: 5.0
+n_samples: 20000
+
+# Data split ratios
+train_ratio: 0.7
+val_ratio: 0.15
+test_ratio: 0.15
+
+# DataLoader settings
+batch_size: 32  # Smaller batch size for fine-tuning
+num_workers: 4
+pin_memory: true
+
+# No dual augmentation for supervised learning
+use_dual_augmentation: false
+
+# Number of classes
+num_classes: 2  # Binary classification: normal vs abnormal
+
+# Data caching
+use_cache: true
+cache_dir: ${data_dir}/.cache/finetune

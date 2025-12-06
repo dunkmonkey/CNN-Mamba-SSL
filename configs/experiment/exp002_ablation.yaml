@@ -1,0 +1,31 @@
+# Ablation Study: CNN-only vs Mamba-only vs Hybrid
+
+# @package _global_
+
+defaults:
+  - override /data: physionet2016
+  - override /trainer: pretrain
+  - override /optimizer: adam
+
+# Experiment name (will be overridden in sweeps)
+experiment_name: exp002_ablation
+
+# MoCo parameters
+moco:
+  queue_size: 65536
+  momentum: 0.999
+  temperature: 0.07
+
+# This config is meant for Hydra multirun sweeps:
+# python scripts/train_pretrain.py -m \
+#   experiment=exp002_ablation \
+#   model=cnn_only,mamba_only,cnn_mamba
+
+trainer:
+  trainer:
+    max_epochs: 200
+    
+data:
+  batch_size: 64
+
+seed: 42

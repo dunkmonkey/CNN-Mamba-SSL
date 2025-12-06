@@ -1,0 +1,14 @@
+# SGD Optimizer Configuration
+
+_target_: torch.optim.SGD
+
+lr: 0.01
+momentum: 0.9
+weight_decay: 1.0e-4
+nesterov: true
+
+# Learning rate scheduler
+scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  T_max: ${trainer.trainer.max_epochs}
+  eta_min: 1.0e-6

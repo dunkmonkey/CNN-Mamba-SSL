@@ -1,0 +1,51 @@
+# Pretraining Trainer Configuration
+
+# PyTorch Lightning Trainer settings
+trainer:
+  accelerator: auto  # auto-detect GPU/CPU
+  devices: 1  # Number of devices
+  max_epochs: 200
+  precision: 16-mixed  # Mixed precision training for memory efficiency
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 1  # Increase for larger effective batch size
+  
+  # Logging
+  log_every_n_steps: 50
+  
+  # Checkpointing
+  enable_checkpointing: true
+  default_root_dir: ${output_dir}
+  
+  # Performance
+  benchmark: true  # Set to true for consistent input sizes
+  deterministic: false  # Set to true for reproducibility (slower)
+
+# Callbacks
+callbacks:
+  model_checkpoint:
+    monitor: val_loss
+    mode: min
+    save_top_k: 3
+    save_last: true
+    filename: "epoch={epoch:03d}-val_loss={val_loss:.4f}"
+    auto_insert_metric_name: false
+    
+  early_stopping:
+    monitor: val_loss
+    mode: min
+    patience: 20
+    min_delta: 0.001
+    
+  lr_monitor:
+    logging_interval: step
+    
+  momentum_update:
+    momentum: 0.999  # MoCo momentum coefficient
+
+# Logger
+logger:
+  tensorboard:
+    save_dir: ${log_dir}
+    name: pretrain
+    version: null
+    default_hp_metric: false

@@ -1,0 +1,18 @@
+# Mamba-only encoder (for ablation study)
+
+_target_: src.models.encoders.mamba_encoder.MambaEncoder
+
+d_model: 128
+d_state: 16
+d_conv: 4
+expand: 2
+n_layers: 6  # Deeper Mamba to compensate for lack of CNN
+dropout: 0.1
+use_gap: true
+
+# Projection Head
+projection_config:
+  input_dim: 128
+  hidden_dim: 128
+  output_dim: 128
+  num_layers: 2
