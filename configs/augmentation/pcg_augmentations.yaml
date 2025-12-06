@@ -1,0 +1,46 @@
+# Heart Sound Data Augmentation Configuration
+
+# Augmentation probabilities (0.0 = never, 1.0 = always)
+augmentation_prob: 0.8  # Overall probability of applying augmentation
+
+# 1. Gaussian Noise
+gaussian_noise:
+  enabled: true
+  prob: 0.5
+  std_range: [0.005, 0.02]  # Noise standard deviation range
+
+# 2. Time Shift
+time_shift:
+  enabled: true
+  prob: 0.5
+  shift_range: [-0.2, 0.2]  # Fraction of signal length
+
+# 3. Amplitude Scaling
+amplitude_scaling:
+  enabled: true
+  prob: 0.5
+  scale_range: [0.8, 1.2]  # Scaling factor range
+
+# 4. Time Warping (non-linear time stretching/compression)
+time_warping:
+  enabled: true
+  prob: 0.3
+  warp_range: [0.95, 1.05]  # Warping factor range
+
+# 5. Time Masking
+time_masking:
+  enabled: true
+  prob: 0.3
+  mask_ratio_range: [0.05, 0.15]  # Fraction of signal to mask
+  num_masks: 2  # Number of mask segments
+
+# 6. Low-pass Filter (most important for PCG)
+lowpass_filter:
+  enabled: true
+  prob: 0.5
+  cutoff_freq_range: [200, 500]  # Cutoff frequency range (Hz)
+  filter_order: 5  # Butterworth filter order
+
+# Compose augmentations randomly
+random_compose: true  # Apply a random subset of augmentations
+max_augmentations: 4  # Maximum number of augmentations to apply simultaneously

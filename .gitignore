@@ -1,0 +1,100 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# PyTorch
+*.pth
+*.pt
+*.ckpt
+
+# Hydra
+outputs/
+multirun/
+.hydra/
+
+# Logs
+logs/
+lightning_logs/
+wandb/
+*.log
+
+# TensorBoard
+events.out.tfevents.*
+runs/
+
+# Data (comment out if you want to track datasets)
+dataset/预训练大规模数据集/*/
+dataset/微调数据集/*/
+*.wav
+*.dat
+*.npy
+*.npz
+*.pkl
+*.pickle
+
+# Cached processed data
+.cache/
+cached_data/
+
+# Model checkpoints (keep only best models)
+checkpoints/
+*.ckpt.backup
+
+# Experiment results
+results/
+figures/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pytest
+.pytest_cache/
+
+# OS
+Thumbs.db

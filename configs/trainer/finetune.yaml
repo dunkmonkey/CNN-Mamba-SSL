@@ -1,0 +1,53 @@
+# Fine-tuning Trainer Configuration
+
+# PyTorch Lightning Trainer settings
+trainer:
+  accelerator: auto
+  devices: 1
+  max_epochs: 100  # Fewer epochs for fine-tuning
+  precision: 16-mixed
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 1
+  
+  # Logging
+  log_every_n_steps: 20
+  
+  # Checkpointing
+  enable_checkpointing: true
+  default_root_dir: ${output_dir}
+  
+  # Performance
+  benchmark: true
+  deterministic: false
+
+# Callbacks
+callbacks:
+  model_checkpoint:
+    monitor: val_acc
+    mode: max
+    save_top_k: 3
+    save_last: true
+    filename: "epoch={epoch:03d}-val_acc={val_acc:.4f}"
+    auto_insert_metric_name: false
+    
+  early_stopping:
+    monitor: val_acc
+    mode: max
+    patience: 15
+    min_delta: 0.001
+    
+  lr_monitor:
+    logging_interval: step
+
+# Logger
+logger:
+  tensorboard:
+    save_dir: ${log_dir}
+    name: finetune
+    version: null
+    default_hp_metric: false
+
+# Fine-tuning strategy
+finetune_strategy: full  # Options: 'linear_probe' or 'full'
+freeze_encoder: false  # Set true for linear probe
+encoder_lr_multiplier: 0.01  # Use smaller LR for encoder in full fine-tuning

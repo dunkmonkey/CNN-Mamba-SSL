@@ -1,0 +1,31 @@
+# CNN-Mamba Hybrid Encoder Configuration
+
+_target_: src.models.encoders.hybrid_encoder.HybridEncoder
+
+# CNN Frontend Configuration
+cnn_config:
+  in_channels: 1  # Single channel audio
+  out_channels: [32, 64, 128]  # Progressive channel expansion
+  kernel_sizes: [16, 8, 4]  # Decreasing kernel sizes
+  strides: [2, 2, 2]  # Downsampling at each layer
+  use_batchnorm: true
+  dropout: 0.1
+
+# Mamba Backend Configuration
+mamba_config:
+  d_model: 128  # Must match CNN output channels
+  d_state: 16  # SSM state dimension
+  d_conv: 4  # Local convolution width
+  expand: 2  # Expansion factor for inner dimension
+  n_layers: 4  # Number of Mamba blocks
+  dropout: 0.1
+
+# Projection Head Configuration (for MoCo)
+projection_config:
+  input_dim: 128
+  hidden_dim: 128
+  output_dim: 128
+  num_layers: 2
+
+# Global Average Pooling for variable-length sequences
+use_gap: true

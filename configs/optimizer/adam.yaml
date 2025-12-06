@@ -1,0 +1,14 @@
+# Adam Optimizer Configuration
+
+_target_: torch.optim.Adam
+
+lr: 0.001
+betas: [0.9, 0.999]
+eps: 1.0e-8
+weight_decay: 1.0e-4
+
+# Learning rate scheduler
+scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  T_max: ${trainer.trainer.max_epochs}
+  eta_min: 1.0e-6

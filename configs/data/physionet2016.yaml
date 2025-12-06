@@ -1,0 +1,31 @@
+# PhysioNet CinC Challenge 2016 Dataset Configuration
+
+_target_: src.data.datamodules.pretrain_datamodule.PretrainDataModule
+
+# Dataset paths
+data_root: ${data_dir}/预训练大规模数据集/PhysioNetCinC Challenge 2016 Database
+challenge_dir: ${.data_root}/challenge_2016_data_set
+training_a_dir: ${.data_root}/training-a
+
+# Audio processing
+target_sr: 4000  # Target sampling rate (Hz)
+segment_length: 5.0  # Segment length in seconds (5s = 20000 samples at 4000Hz)
+n_samples: 20000  # segment_length * target_sr
+
+# Data split ratios
+train_ratio: 0.8
+val_ratio: 0.1
+test_ratio: 0.1
+
+# DataLoader settings
+batch_size: 64
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+
+# MoCo dual augmentation
+use_dual_augmentation: true  # Generate two augmented views for contrastive learning
+
+# Data caching
+use_cache: true
+cache_dir: ${data_dir}/.cache/physionet2016
