@@ -42,10 +42,21 @@ callbacks:
   momentum_update:
     momentum: 0.999  # MoCo momentum coefficient
 
-# Logger
+# Logger - 支持 TensorBoard 和 W&B
 logger:
   tensorboard:
     save_dir: ${log_dir}
     name: pretrain
     version: null
+  
+  # Weights & Biases (可选，通过命令行启用: trainer=pretrain +logger=wandb)
+  # wandb:
+  #   project: CNN-Mamba-SSL
+  #   name: pretrain_${now:%Y%m%d_%H%M%S}
+  #   save_dir: ${log_dir}/wandb
+  #   log_model: true
+
+# RTX 4090 优化配置
+# 使用以下命令覆盖默认配置:
+# python scripts/train_pretrain.py trainer.accumulate_grad_batches=4 data.batch_size=256
     default_hp_metric: false

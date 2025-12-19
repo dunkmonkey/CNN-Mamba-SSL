@@ -1,0 +1,37 @@
+# Phase 1 Ablation A1: Uni-Mamba vs Bi-Mamba
+# 消融实验：验证双向 Mamba 的效果
+
+defaults:
+  - /model: time_stream
+  - /data: physionet2016_v2
+  - /trainer: pretrain
+  - /optimizer: adam
+  - /augmentation: mixed
+  - _self_
+
+# 实验标识
+experiment_name: ablation_a1_bimamba
+experiment_group: phase1_ablation
+
+# 实验变体（通过命令行覆盖）
+# python scripts/train_pretrain.py experiment=ablation_a1 model.mamba_config.bidirectional=false
+# python scripts/train_pretrain.py experiment=ablation_a1 model.mamba_config.bidirectional=true
+
+# W&B 追踪
+logger:
+  wandb:
+    project: CNN-Mamba-SSL
+    group: phase1_ablation
+    tags: [ablation, A1, bimamba]
+    job_type: pretrain
+
+# 元信息
+_metadata_:
+  phase: 1
+  ablation_id: A1
+  description: "Uni-Mamba vs Bi-Mamba comparison"
+  variants:
+    - name: uni_mamba
+      override: "model.mamba_config.bidirectional=false"
+    - name: bi_mamba
+      override: "model.mamba_config.bidirectional=true"

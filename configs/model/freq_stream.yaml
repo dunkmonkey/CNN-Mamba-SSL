@@ -1,0 +1,38 @@
+# Frequency-Stream Encoder Configuration (Phase 1)
+# 频域流编码器：用于处理 Log-Mel 声谱图
+# 使用垂直条带 Patch Embedding 保持频率轴完整性
+
+_target_: src.models.encoders.freq_stream_encoder.FreqStreamEncoderWithProjection
+
+# Input specification
+# 声谱图参数：Window=25ms, Hop=10ms, Mel bins=64
+# 5s @ 2kHz: 5000ms / 10ms = 500 frames
+n_mels: 64
+n_frames: 500
+patch_width: 4  # 每个 patch 覆盖 40ms (4 * 10ms)
+
+# Embedding dimension (与时域流一致)
+embed_dim: 128
+
+# Mamba Configuration
+n_layers: 4
+d_state: 16
+d_conv: 4
+expand: 2
+dropout: 0.1
+
+# Bidirectional Mamba
+bidirectional: true
+bi_fusion_mode: concat  # concat, gate, add
+
+# Projection head (for MoCo)
+projection_dim: 128
+projection_hidden_dim: 512
+
+# 元信息
+_metadata_:
+  phase: 1
+  stream: frequency
+  description: "Frequency-stream encoder for mel-spectrogram processing"
+  expected_input: "[batch, 64, 500]"  # (n_mels, n_frames)
+  expected_tokens: 125  # 500 / 4 = 125 tokens

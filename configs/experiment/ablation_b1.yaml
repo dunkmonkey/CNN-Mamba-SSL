@@ -1,0 +1,39 @@
+# Phase 2 Ablation B1: Augmentation Strength
+# 消融实验：验证增强策略强度的影响
+
+defaults:
+  - /model: time_stream
+  - /data: physionet2016_v2
+  - /trainer: pretrain
+  - /optimizer: adam
+  - _self_
+
+# 实验标识
+experiment_name: ablation_b1_augmentation
+experiment_group: phase2_ablation
+
+# 使用方式：
+# 弱增强: python scripts/train_pretrain.py experiment=ablation_b1 augmentation=weak
+# 强增强: python scripts/train_pretrain.py experiment=ablation_b1 augmentation=strong
+# 混合增强: python scripts/train_pretrain.py experiment=ablation_b1 augmentation=mixed
+
+# W&B 追踪
+logger:
+  wandb:
+    project: CNN-Mamba-SSL
+    group: phase2_ablation
+    tags: [ablation, B1, augmentation]
+    job_type: pretrain
+
+# 元信息
+_metadata_:
+  phase: 2
+  ablation_id: B1
+  description: "Augmentation strength comparison (weak/strong/mixed)"
+  variants:
+    - name: weak
+      override: "augmentation=weak"
+    - name: strong
+      override: "augmentation=strong"
+    - name: mixed
+      override: "augmentation=mixed"

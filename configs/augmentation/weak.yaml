@@ -1,0 +1,52 @@
+# Weak Augmentation Configuration (Phase 2 Ablation B1)
+# 弱增强策略：较低的应用概率和较小的变换幅度
+
+# 时域增强
+gaussian_noise:
+  enabled: true
+  prob: 0.3
+  std_range: [0.003, 0.01]
+
+time_shift:
+  enabled: true
+  prob: 0.3
+  shift_range: [-0.1, 0.1]
+
+amplitude_scaling:
+  enabled: true
+  prob: 0.3
+  scale_range: [0.9, 1.1]
+
+time_warping:
+  enabled: false
+  prob: 0.0
+
+time_masking:
+  enabled: false
+  prob: 0.0
+
+lowpass_filter:
+  enabled: true
+  prob: 0.3
+  cutoff_freq_range: [300, 500]
+  filter_order: 5
+
+# 频域增强 (SpecAugment)
+spec_augment:
+  enabled: true
+  freq_mask_param: 10
+  time_mask_param: 20
+  num_freq_masks: 1
+  num_time_masks: 1
+  prob: 0.3
+
+# 组合设置
+random_compose: true
+max_augmentations: 2
+
+# 元信息
+_metadata_:
+  phase: 2
+  ablation: B1
+  strength: weak
+  description: "Weak augmentation for ablation study"

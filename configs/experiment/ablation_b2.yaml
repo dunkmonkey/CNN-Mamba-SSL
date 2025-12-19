@@ -1,0 +1,43 @@
+# Phase 2 Ablation B2: Projection Dimension
+# 消融实验：验证投影头维度的影响
+
+defaults:
+  - /model: time_stream
+  - /data: physionet2016_v2
+  - /trainer: pretrain
+  - /optimizer: adam
+  - /augmentation: mixed
+  - _self_
+
+# 实验标识
+experiment_name: ablation_b2_projection_dim
+experiment_group: phase2_ablation
+
+# 使用方式：
+# python scripts/train_pretrain.py experiment=ablation_b2 model.projection_config.output_dim=64
+# python scripts/train_pretrain.py experiment=ablation_b2 model.projection_config.output_dim=128
+# python scripts/train_pretrain.py experiment=ablation_b2 model.projection_config.output_dim=256
+# python scripts/train_pretrain.py experiment=ablation_b2 model.projection_config.output_dim=512
+
+# W&B 追踪
+logger:
+  wandb:
+    project: CNN-Mamba-SSL
+    group: phase2_ablation
+    tags: [ablation, B2, projection_dim]
+    job_type: pretrain
+
+# 元信息
+_metadata_:
+  phase: 2
+  ablation_id: B2
+  description: "Projection dimension comparison (64/128/256/512)"
+  variants:
+    - name: dim_64
+      override: "model.projection_config.output_dim=64"
+    - name: dim_128
+      override: "model.projection_config.output_dim=128"
+    - name: dim_256
+      override: "model.projection_config.output_dim=256"
+    - name: dim_512
+      override: "model.projection_config.output_dim=512"

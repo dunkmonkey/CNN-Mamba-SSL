@@ -39,13 +39,20 @@ callbacks:
   lr_monitor:
     logging_interval: step
 
-# Logger
+# Logger - 支持 TensorBoard 和 W&B
 logger:
   tensorboard:
     save_dir: ${log_dir}
     name: finetune
     version: null
     default_hp_metric: false
+  
+  # Weights & Biases (可选，通过命令行启用)
+  # wandb:
+  #   project: CNN-Mamba-SSL
+  #   name: finetune_${now:%Y%m%d_%H%M%S}
+  #   save_dir: ${log_dir}/wandb
+  #   log_model: true
 
 # Fine-tuning strategy
 finetune_strategy: full  # Options: 'linear_probe' or 'full'

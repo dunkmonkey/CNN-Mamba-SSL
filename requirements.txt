@@ -34,9 +34,9 @@ seaborn>=0.12.0
 # Progress Tracking
 tqdm>=4.65.0
 
-# Experiment Tracking (Optional)
+# Experiment Tracking
 tensorboard>=2.13.0
-# wandb>=0.15.0  # Uncomment if using Weights & Biases
+wandb>=0.15.0  # Weights & Biases for experiment tracking
 
 # Development Tools
 pytest>=7.4.0
@@ -44,3 +44,5 @@ black>=23.0.0
 flake8>=6.0.0
 ipython>=8.14.0
 jupyter>=1.0.0
+
+# SpecAugment (already included via torchaudio)

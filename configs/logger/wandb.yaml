@@ -1,0 +1,20 @@
+# Weights & Biases Logger Configuration
+# 用于追踪所有消融实验的超参数和指标曲线
+
+wandb:
+  project: CNN-Mamba-SSL
+  entity: null  # 设置为你的 W&B 团队/用户名，null 表示使用默认账户
+  name: ${hydra:job.name}  # 实验名称，自动从 Hydra 获取
+  tags: []  # 可在命令行覆盖，如 logger.wandb.tags=[ablation,bimamba]
+  notes: null  # 实验备注
+  group: null  # 实验分组，如 phase1, phase2
+  job_type: null  # 任务类型，如 pretrain, finetune, linear_probe
+  
+  # 日志设置
+  log_model: true  # 是否上传模型检查点到 W&B
+  save_dir: ${log_dir}/wandb
+  offline: false  # 离线模式（无网络时使用）
+  
+  # 追踪配置
+  config_exclude_keys: []  # 排除的配置键
+  reinit: true  # 允许在同一进程中多次初始化

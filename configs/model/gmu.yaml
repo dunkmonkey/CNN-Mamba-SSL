@@ -1,0 +1,24 @@
+# GMU Fusion Configuration (Phase 3 Ablation C1)
+# 融合模块配置
+
+# 可用融合模式：
+# - gmu: 自适应门控融合（推荐）
+# - concat: 简单拼接后投影
+# - add: 直接相加
+
+mode: gmu
+
+# 上采样配置
+# 将频域流 125 tokens 上采样到时域流 625 tokens
+upsample_kernel: 5  # ConvTranspose1d 核大小
+upsample_stride: 5  # 上采样因子
+
+# 门控网络配置 (仅 gmu 模式使用)
+gate:
+  hidden_dim: 128
+  dropout: 0.1
+
+# 元信息
+_metadata_:
+  ablation: C1
+  comparison: "gmu vs concat"

@@ -1,0 +1,40 @@
+# Phase 3 Ablation C1: Fusion Strategy
+# 消融实验：验证融合策略的影响
+
+defaults:
+  - /model: dual_stream
+  - /data: physionet2016_v2
+  - /trainer: pretrain
+  - /optimizer: adam
+  - /augmentation: mixed
+  - _self_
+
+# 实验标识
+experiment_name: ablation_c1_fusion
+experiment_group: phase3_ablation
+
+# 使用方式：
+# GMU: python scripts/train_pretrain.py experiment=ablation_c1 model.fusion.mode=gmu
+# Concat: python scripts/train_pretrain.py experiment=ablation_c1 model.fusion.mode=concat
+# Add: python scripts/train_pretrain.py experiment=ablation_c1 model.fusion.mode=add
+
+# W&B 追踪
+logger:
+  wandb:
+    project: CNN-Mamba-SSL
+    group: phase3_ablation
+    tags: [ablation, C1, fusion]
+    job_type: pretrain
+
+# 元信息
+_metadata_:
+  phase: 3
+  ablation_id: C1
+  description: "Fusion strategy comparison (GMU/Concat/Add)"
+  variants:
+    - name: gmu
+      override: "model.fusion.mode=gmu"
+    - name: concat
+      override: "model.fusion.mode=concat"
+    - name: add
+      override: "model.fusion.mode=add"

@@ -9,8 +9,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name="cnn-mamba-ssl",
     version="0.1.0",
-    author="Your Name",
-    author_email="your.email@example.com",
+    author="dunkmonkey",
+    author_email="2825401389@qq.com",
     description="Self-supervised contrastive learning for heart sound classification using CNN-Mamba hybrid encoder",
     long_description=long_description,
     long_description_content_type="text/markdown",

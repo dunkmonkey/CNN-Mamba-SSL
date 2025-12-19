@@ -1,0 +1,55 @@
+# Dual-Stream Encoder Configuration (Phase 3)
+# 双流时频编码器：融合时域流和频域流
+
+# 使用工厂函数构建
+_target_: src.models.encoders.dual_stream_encoder.build_dual_stream_encoder
+
+# 时域流配置 (处理原始波形)
+time_stream:
+  n_samples: 10000  # 2kHz * 5s
+  cnn_config:
+    in_channels: 1
+    out_channels: [32, 64, 128]
+    kernel_sizes: [25, 25, 3]
+    strides: [4, 4, 1]  # 输出 625 tokens
+    use_batchnorm: true
+    dropout: 0.1
+  mamba_config:
+    d_model: 128
+    d_state: 16
+    d_conv: 4
+    expand: 2
+    n_layers: 4
+    dropout: 0.1
+    bidirectional: true
+    bi_fusion_mode: concat
+
+# 频域流配置 (处理梅尔声谱图)
+freq_stream:
+  n_mels: 64
+  n_frames: 500  # 5s / 10ms hop
+  patch_width: 4  # 输出 125 tokens
+  embed_dim: 128
+  n_layers: 4
+  d_state: 16
+  d_conv: 4
+  expand: 2
+  dropout: 0.1
+  bidirectional: true
+  bi_fusion_mode: concat
+
+# 融合配置
+fusion:
+  mode: gmu  # gmu, concat, add, none
+  upsample_kernel: 5
+  dropout: 0.1
+
+# 投影头配置
+projection:
+  type: mlp  # mlp, wavkan
+  hidden_dim: 512
+  output_dim: 128
+  num_layers: 2
+
+# Global Average Pooling
+use_gap: true

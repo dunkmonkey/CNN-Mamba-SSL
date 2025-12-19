@@ -1,0 +1,55 @@
+# Mixed Augmentation Configuration (Phase 2 Ablation B1)
+# 混合增强策略：结合强弱增强的优点，平衡多样性和稳定性
+
+# 时域增强
+gaussian_noise:
+  enabled: true
+  prob: 0.5
+  std_range: [0.005, 0.02]
+
+time_shift:
+  enabled: true
+  prob: 0.5
+  shift_range: [-0.2, 0.2]
+
+amplitude_scaling:
+  enabled: true
+  prob: 0.5
+  scale_range: [0.8, 1.2]
+
+time_warping:
+  enabled: true
+  prob: 0.3
+  warp_range: [0.95, 1.05]
+
+time_masking:
+  enabled: true
+  prob: 0.3
+  mask_ratio_range: [0.05, 0.15]
+  num_masks: 2
+
+lowpass_filter:
+  enabled: true
+  prob: 0.5
+  cutoff_freq_range: [200, 500]
+  filter_order: 5
+
+# 频域增强 (SpecAugment)
+spec_augment:
+  enabled: true
+  freq_mask_param: 20
+  time_mask_param: 40
+  num_freq_masks: 2
+  num_time_masks: 2
+  prob: 0.5
+
+# 组合设置
+random_compose: true
+max_augmentations: 4
+
+# 元信息
+_metadata_:
+  phase: 2
+  ablation: B1
+  strength: mixed
+  description: "Mixed augmentation (recommended default)"

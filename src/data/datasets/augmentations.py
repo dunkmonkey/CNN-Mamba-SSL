@@ -332,3 +332,155 @@ def get_default_augmentation(sr: int = 4000) -> ComposeAugmentations:
         'max_augmentations': 4
     }
     return build_augmentation_pipeline(config, sr)
+
+
+# =============================================================================
+# Spectrogram Augmentations (Phase 2)
+# =============================================================================
+
+class SpecAugment:
+    """
+    SpecAugment for spectrogram data augmentation.
+    
+    Implements frequency masking and time masking as described in
+    "SpecAugment: A Simple Data Augmentation Method for Automatic Speech Recognition"
+    
+    用于频域流的声谱图增强，迫使模型不依赖特定的频率特征或时间片段。
+    
+    注意：此类作用于声谱图（2D 数据），而非原始波形。
+    """
+    
+    def __init__(
+        self,
+        freq_mask_param: int = 20,
+        time_mask_param: int = 40,
+        num_freq_masks: int = 2,
+        num_time_masks: int = 2,
+        prob: float = 0.5,
+        mask_value: float = 0.0
+    ):
+        """
+        Args:
+            freq_mask_param: 频率掩码最大宽度（F）
+            time_mask_param: 时间掩码最大宽度（T）
+            num_freq_masks: 频率掩码数量
+            num_time_masks: 时间掩码数量
+            prob: 应用增强的概率
+            mask_value: 掩码填充值
+        """
+        self.freq_mask_param = freq_mask_param
+        self.time_mask_param = time_mask_param
+        self.num_freq_masks = num_freq_masks
+        self.num_time_masks = num_time_masks
+        self.prob = prob
+        self.mask_value = mask_value
+    
+    def __call__(self, spec: np.ndarray) -> np.ndarray:
+        """
+        应用 SpecAugment。
+        
+        Args:
+            spec: 声谱图 (n_mels, n_frames) 或 (batch, n_mels, n_frames)
+            
+        Returns:
+            增强后的声谱图
+        """
+        if random.random() > self.prob:
+            return spec
+        
+        spec = spec.copy()
+        n_mels, n_frames = spec.shape[-2:]
+        
+        # Frequency masking
+        for _ in range(self.num_freq_masks):
+            f = np.random.randint(0, min(self.freq_mask_param, n_mels) + 1)
+            f0 = np.random.randint(0, max(1, n_mels - f))
+            if spec.ndim == 2:
+                spec[f0:f0 + f, :] = self.mask_value
+            else:
+                spec[..., f0:f0 + f, :] = self.mask_value
+        
+        # Time masking
+        for _ in range(self.num_time_masks):
+            t = np.random.randint(0, min(self.time_mask_param, n_frames) + 1)
+            t0 = np.random.randint(0, max(1, n_frames - t))
+            if spec.ndim == 2:
+                spec[:, t0:t0 + t] = self.mask_value
+            else:
+                spec[..., :, t0:t0 + t] = self.mask_value
+        
+        return spec
+
+
+class SpecAugmentTorch(torch.nn.Module):
+    """
+    SpecAugment 的 PyTorch 版本，用于在训练时作为 Transform 使用。
+    """
+    
+    def __init__(
+        self,
+        freq_mask_param: int = 20,
+        time_mask_param: int = 40,
+        num_freq_masks: int = 2,
+        num_time_masks: int = 2,
+        prob: float = 0.5,
+        mask_value: float = 0.0
+    ):
+        super().__init__()
+        self.freq_mask_param = freq_mask_param
+        self.time_mask_param = time_mask_param
+        self.num_freq_masks = num_freq_masks
+        self.num_time_masks = num_time_masks
+        self.prob = prob
+        self.mask_value = mask_value
+    
+    def forward(self, spec: torch.Tensor) -> torch.Tensor:
+        """
+        应用 SpecAugment。
+        
+        Args:
+            spec: 声谱图 (n_mels, n_frames) 或 (batch, n_mels, n_frames)
+            
+        Returns:
+            增强后的声谱图
+        """
+        if not self.training or random.random() > self.prob:
+            return spec
+        
+        spec = spec.clone()
+        n_mels, n_frames = spec.shape[-2:]
+        
+        # Frequency masking
+        for _ in range(self.num_freq_masks):
+            f = torch.randint(0, min(self.freq_mask_param, n_mels) + 1, (1,)).item()
+            f0 = torch.randint(0, max(1, n_mels - f), (1,)).item()
+            if spec.dim() == 2:
+                spec[f0:f0 + f, :] = self.mask_value
+            else:
+                spec[..., f0:f0 + f, :] = self.mask_value
+        
+        # Time masking
+        for _ in range(self.num_time_masks):
+            t = torch.randint(0, min(self.time_mask_param, n_frames) + 1, (1,)).item()
+            t0 = torch.randint(0, max(1, n_frames - t), (1,)).item()
+            if spec.dim() == 2:
+                spec[:, t0:t0 + t] = self.mask_value
+            else:
+                spec[..., :, t0:t0 + t] = self.mask_value
+        
+        return spec
+
+
+def get_spec_augmentation(
+    freq_mask: int = 20,
+    time_mask: int = 40,
+    prob: float = 0.5
+) -> SpecAugment:
+    """获取默认的 SpecAugment 配置。"""
+    return SpecAugment(
+        freq_mask_param=freq_mask,
+        time_mask_param=time_mask,
+        num_freq_masks=2,
+        num_time_masks=2,
+        prob=prob
+    )

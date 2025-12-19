@@ -1,0 +1,47 @@
+# Time-Stream Encoder Configuration (Phase 1)
+# 时域流编码器：用于处理原始波形信号
+# 按照实验设计调整：采样率 2kHz，kernel_sizes=[25,25,3], strides=[4,4,1]
+
+_target_: src.models.encoders.hybrid_encoder.HybridEncoder
+
+# CNN Frontend Configuration (Time-Domain Tokenizer)
+# 设计目标：保留微秒级瞬态变化，分辨 S2 分裂（30-50ms间隔）
+cnn_config:
+  in_channels: 1  # 单通道音频
+  out_channels: [32, 64, 128]  # 渐进式通道扩展
+  # Layer 1: 大卷积核（~12.5ms）捕捉基础波形轮廓
+  # Layer 2: 继续下采样
+  # Layer 3: 不降低分辨率，增加特征通道
+  kernel_sizes: [25, 25, 3]  # 根据实验设计调整
+  strides: [4, 4, 1]  # 总下采样 16x: 10000 -> 625 tokens
+  use_batchnorm: true
+  dropout: 0.1
+
+# Mamba Backend Configuration
+# 使用双向 Mamba 捕捉长程节律模式
+mamba_config:
+  d_model: 128  # 必须与 CNN 输出通道数匹配
+  d_state: 16  # SSM 状态维度
+  d_conv: 4  # 局部卷积宽度
+  expand: 2  # 内部维度扩展因子
+  n_layers: 4  # Mamba 块数量
+  dropout: 0.1
+  bidirectional: false  # Phase 1 消融实验：先用单向
+
+# Projection Head Configuration (for MoCo)
+projection_config:
+  input_dim: 128
+  hidden_dim: 512
+  output_dim: 128
+  num_layers: 2
+
+# Global Average Pooling
+use_gap: true
+
+# 元信息
+_metadata_:
+  phase: 1
+  stream: time
+  description: "Time-stream encoder for raw waveform processing"
+  expected_input: "[batch, 1, 10000]"  # 2kHz * 5s = 10000 samples
+  expected_tokens: 625  # 10000 / 16 = 625 tokens

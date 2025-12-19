@@ -82,6 +82,8 @@ class HybridEncoder(nn.Module):
     - CNN for local feature extraction (short-term patterns)
     - Mamba for global temporal modeling (long-term dependencies)
     - Optional projection head for contrastive learning
+    
+    Supports both unidirectional and bidirectional Mamba.
     """
     
     def __init__(
@@ -89,12 +91,15 @@ class HybridEncoder(nn.Module):
         cnn_config: Dict[str, Any],
         mamba_config: Dict[str, Any],
         projection_config: Optional[Dict[str, Any]] = None,
-        use_gap: bool = True
+        use_gap: bool = True,
+        **kwargs  # 忽略其他参数（如 _metadata_）
     ):
         """
         Args:
             cnn_config: Configuration for CNN encoder
             mamba_config: Configuration for Mamba encoder
+                - bidirectional: bool, whether to use BiMamba
+                - bi_fusion_mode: str, fusion mode for BiMamba ("concat", "gate", "add")
             projection_config: Optional configuration for projection head
             use_gap: Whether to use Global Average Pooling
         """
@@ -113,7 +118,7 @@ class HybridEncoder(nn.Module):
             use_gap=False  # Don't pool in CNN, Mamba will handle sequence
         )
         
-        # Mamba Backend
+        # Mamba Backend (支持双向)
         cnn_out_dim = self.cnn.get_output_dim()
         self.mamba = MambaEncoder(
             d_model=mamba_config.get('d_model', 128),
@@ -124,7 +129,9 @@ class HybridEncoder(nn.Module):
             dropout=mamba_config.get('dropout', 0.1),
             use_gap=use_gap,
             input_projection=True,
-            input_dim=cnn_out_dim
+            input_dim=cnn_out_dim,
+            bidirectional=mamba_config.get('bidirectional', False),
+            bi_fusion_mode=mamba_config.get('bi_fusion_mode', 'concat')
         )
         
         # Projection Head (optional, for MoCo)

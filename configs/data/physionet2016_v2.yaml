@@ -1,0 +1,44 @@
+# PhysioNet 2016 - Phase 1 优化配置
+# 采样率调整为 2kHz，支持 patient-wise split
+
+_target_: src.data.datamodules.pretrain_datamodule.PretrainDataModule
+
+# Dataset paths
+data_root: ${data_dir}/预训练大规模数据集/PhysioNetCinC Challenge 2016 Database
+challenge_dir: ${.data_root}/challenge_2016_data_set
+training_a_dir: ${.data_root}/training-a
+
+# Audio processing - Phase 1 调整
+target_sr: 2000  # 目标采样率 2kHz（覆盖心音频率范围 20-1000Hz）
+segment_length: 5.0  # 片段长度 5 秒
+n_samples: 10000  # segment_length * target_sr = 5 * 2000 = 10000
+
+# Patient-wise split configuration
+use_patient_split: true  # 启用患者级别划分
+train_ratio: 0.8
+val_ratio: 0.1
+test_ratio: 0.1
+split_seed: 42  # 划分随机种子
+stratify: true  # 分层采样保持标签分布
+
+# DataLoader settings - RTX 4090 优化
+batch_size: 256  # 增大 batch size
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+
+# MoCo dual augmentation
+use_dual_augmentation: true
+
+# Data caching
+use_cache: true
+cache_dir: ${data_dir}/.cache/physionet2016_2khz
+
+# Mel spectrogram settings (for frequency stream)
+mel_config:
+  n_mels: 64
+  n_fft: 512  # 256ms window at 2kHz
+  hop_length: 20  # 10ms hop at 2kHz
+  fmin: 20
+  fmax: 1000
+  compute_mel: false  # Phase 1 仅用时域，Phase 3 启用

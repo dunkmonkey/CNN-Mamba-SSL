@@ -1,0 +1,36 @@
+# Phase 1 Ablation A2: Time-Only vs Freq-Only
+# 消融实验：验证单流性能差异
+
+defaults:
+  - /data: physionet2016_v2
+  - /trainer: pretrain
+  - /optimizer: adam
+  - /augmentation: mixed
+  - _self_
+
+# 实验标识
+experiment_name: ablation_a2_single_stream
+experiment_group: phase1_ablation
+
+# 使用方式：
+# 时域流: python scripts/train_pretrain.py experiment=ablation_a2 model=time_stream
+# 频域流: python scripts/train_pretrain.py experiment=ablation_a2 model=freq_stream
+
+# W&B 追踪
+logger:
+  wandb:
+    project: CNN-Mamba-SSL
+    group: phase1_ablation
+    tags: [ablation, A2, single_stream]
+    job_type: pretrain
+
+# 元信息
+_metadata_:
+  phase: 1
+  ablation_id: A2
+  description: "Time-Only vs Freq-Only stream comparison"
+  variants:
+    - name: time_only
+      override: "model=time_stream"
+    - name: freq_only
+      override: "model=freq_stream"

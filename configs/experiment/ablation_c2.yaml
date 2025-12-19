@@ -1,0 +1,40 @@
+# Phase 3 Ablation C2: Projection Head Type
+# 消融实验：验证 MLP vs wav-KAN 投影头
+
+defaults:
+  - /model: dual_stream
+  - /data: physionet2016_v2
+  - /trainer: pretrain
+  - /optimizer: adam
+  - /augmentation: mixed
+  - _self_
+
+# 实验标识
+experiment_name: ablation_c2_projection_head
+experiment_group: phase3_ablation
+
+# 使用方式：
+# MLP: python scripts/train_pretrain.py experiment=ablation_c2 model.projection.type=mlp
+# wav-KAN (morlet): python scripts/train_pretrain.py experiment=ablation_c2 model.projection.type=wavkan model.projection.wavelet_type=morlet
+# wav-KAN (mexican_hat): python scripts/train_pretrain.py experiment=ablation_c2 model.projection.type=wavkan model.projection.wavelet_type=mexican_hat
+
+# W&B 追踪
+logger:
+  wandb:
+    project: CNN-Mamba-SSL
+    group: phase3_ablation
+    tags: [ablation, C2, projection_head]
+    job_type: pretrain
+
+# 元信息
+_metadata_:
+  phase: 3
+  ablation_id: C2
+  description: "Projection head comparison (MLP/wav-KAN)"
+  variants:
+    - name: mlp
+      override: "model.projection.type=mlp"
+    - name: wavkan_morlet
+      override: "model.projection.type=wavkan model.projection.wavelet_type=morlet"
+    - name: wavkan_mexican_hat
+      override: "model.projection.type=wavkan model.projection.wavelet_type=mexican_hat"

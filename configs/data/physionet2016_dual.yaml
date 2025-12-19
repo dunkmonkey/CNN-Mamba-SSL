@@ -1,0 +1,40 @@
+# Dual-Modal PhysioNet 2016 Configuration
+# For DualStreamEncoder training
+
+_target_: src.data.datamodules.dual_modal_datamodule.DualModalPretrainDataModule
+
+# Data paths
+data_root: ${oc.env:PHYSIONET_DATA_ROOT,data/physionet2016}
+
+# Audio preprocessing
+target_sr: 2000  # Changed from 4000 to 2000 Hz
+segment_length: 5.0
+n_samples: 10000  # 2000 * 5 = 10000
+
+# Mel-spectrogram parameters
+n_mels: 64
+n_fft: 512
+hop_length: 128  # Results in ~500 frames for 5s audio
+win_length: 400  # 200ms window
+
+# Data splitting (patient-wise)
+train_ratio: 0.8
+val_ratio: 0.1
+test_ratio: 0.1
+
+# Dataloader settings
+batch_size: 64  # Will be overridden in experiment configs for RTX 4090
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+
+# Augmentation settings
+apply_time_aug: true  # Apply time-domain augmentation (noise, filtering, etc.)
+apply_freq_aug: true  # Apply SpecAugment to mel-spectrograms
+
+# Caching
+use_cache: true
+cache_dir: ${oc.env:CACHE_DIR,cache/physionet2016}
+
+# Random seed
+seed: 42

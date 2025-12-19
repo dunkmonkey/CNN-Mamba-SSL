@@ -1,0 +1,39 @@
+# Phase 3 Ablation C3: Full Architecture Comparison
+# 消融实验：完整架构对比
+
+defaults:
+  - /data: physionet2016_v2
+  - /trainer: pretrain
+  - /optimizer: adam
+  - /augmentation: mixed
+  - _self_
+
+# 实验标识
+experiment_name: ablation_c3_full_architecture
+experiment_group: phase3_ablation
+
+# 使用方式：
+# 单流: python scripts/train_pretrain.py experiment=ablation_c3 model=time_stream
+# 双流+GMU: python scripts/train_pretrain.py experiment=ablation_c3 model=dual_stream
+# 双流+GMU+wav-KAN: python scripts/train_pretrain.py experiment=ablation_c3 model=dual_stream_wavkan
+
+# W&B 追踪
+logger:
+  wandb:
+    project: CNN-Mamba-SSL
+    group: phase3_ablation
+    tags: [ablation, C3, full_architecture]
+    job_type: pretrain
+
+# 元信息
+_metadata_:
+  phase: 3
+  ablation_id: C3
+  description: "Full architecture comparison"
+  variants:
+    - name: single_stream
+      override: "model=time_stream"
+    - name: dual_stream_gmu
+      override: "model=dual_stream"
+    - name: dual_stream_gmu_wavkan
+      override: "model=dual_stream_wavkan"
