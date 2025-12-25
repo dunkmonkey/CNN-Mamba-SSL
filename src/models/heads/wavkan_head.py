@@ -200,6 +200,7 @@ class WavKANProjectionHead(nn.Module):
         output_dim: int = 128,
         wavelet_type: Literal["mexican_hat", "morlet", "dog", "shannon"] = "morlet",
         num_layers: int = 2,
+        num_wavelets: Optional[int] = None,
         use_base_linear: bool = True,
         dropout: float = 0.1
     ):
@@ -218,6 +219,9 @@ class WavKANProjectionHead(nn.Module):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.wavelet_type = wavelet_type
+        # Backward-compat: older versions exposed num_wavelets; current wav-KAN uses
+        # a fixed (learned) wavelet transform per layer.
+        self.num_wavelets = num_wavelets
         
         layers = []
         in_dim = input_dim

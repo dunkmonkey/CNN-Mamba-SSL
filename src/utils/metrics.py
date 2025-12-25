@@ -16,6 +16,55 @@ from sklearn.metrics import (
 from typing import Dict, Optional, Tuple
 
 
+def compute_metrics(
+    predictions,
+    targets,
+    probabilities: Optional[object] = None,
+    num_classes: Optional[int] = None,
+) -> Dict[str, float]:
+    """Compute evaluation metrics (binary or multiclass).
+
+    This is a lightweight wrapper kept for backward compatibility.
+
+    Args:
+        predictions: Predicted class labels (array-like or tensor)
+        targets: True class labels (array-like or tensor)
+        probabilities: Optional prediction probabilities (array-like or tensor)
+        num_classes: Optional number of classes (if omitted, inferred from targets)
+
+    Returns:
+        Dictionary of metric names and values.
+    """
+    # Convert torch tensors to numpy
+    if isinstance(predictions, torch.Tensor):
+        predictions_np = predictions.detach().cpu().numpy()
+    else:
+        predictions_np = np.asarray(predictions)
+
+    if isinstance(targets, torch.Tensor):
+        targets_np = targets.detach().cpu().numpy()
+    else:
+        targets_np = np.asarray(targets)
+
+    probabilities_np = None
+    if probabilities is not None:
+        if isinstance(probabilities, torch.Tensor):
+            probabilities_np = probabilities.detach().cpu().numpy()
+        else:
+            probabilities_np = np.asarray(probabilities)
+
+    if num_classes is None:
+        unique = np.unique(targets_np)
+        num_classes = int(unique.size) if unique.size > 0 else 2
+
+    if num_classes <= 2:
+        return compute_binary_metrics(predictions_np, targets_np, probabilities_np)
+
+    return compute_multiclass_metrics(
+        predictions_np, targets_np, probabilities_np, num_classes=num_classes
+    )
+
+
 def compute_binary_metrics(
     predictions: np.ndarray,
     targets: np.ndarray,

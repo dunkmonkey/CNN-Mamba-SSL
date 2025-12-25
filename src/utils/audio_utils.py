@@ -35,6 +35,26 @@ def load_audio(
     return audio, orig_sr if sr is None else sr
 
 
+def resample_audio(
+    audio: np.ndarray,
+    orig_sr: int,
+    target_sr: int
+) -> np.ndarray:
+    """Resample audio to target sampling rate.
+
+    Args:
+        audio: Audio array
+        orig_sr: Original sampling rate
+        target_sr: Target sampling rate
+
+    Returns:
+        Resampled audio
+    """
+    if orig_sr == target_sr:
+        return audio
+    return librosa.resample(y=audio, orig_sr=orig_sr, target_sr=target_sr)
+
+
 def save_audio(
     file_path: str,
     audio: np.ndarray,

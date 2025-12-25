@@ -7,7 +7,7 @@ so all recordings from the same patient are in the same split.
 
 import numpy as np
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional, Union
+from typing import List, Dict, Tuple, Optional, Union, Any
 from collections import defaultdict
 import hashlib
 
@@ -28,7 +28,8 @@ class PatientSplitter:
         val_ratio: float = 0.1,
         test_ratio: float = 0.1,
         seed: int = 42,
-        stratify: bool = True
+        stratify: bool = True,
+        dataset: Optional[Any] = None
     ):
         """
         Args:
@@ -46,6 +47,7 @@ class PatientSplitter:
         self.test_ratio = test_ratio
         self.seed = seed
         self.stratify = stratify
+        self.dataset = dataset
         
         self._rng = np.random.RandomState(seed)
     
@@ -74,21 +76,34 @@ class PatientSplitter:
     
     def split(
         self,
+        records: Optional[List[Dict]] = None,
+        patient_id_key: str = "patient_id",
+        label_key: str = "label"
+    ) -> Union[
+        Tuple[List[Dict], List[Dict], List[Dict]],
+        Tuple[List[int], List[int], List[int]]
+    ]:
+        """执行 patient-wise 划分。
+
+        支持两种用法：
+        1) records 模式：传入 records 列表，返回 (train_records, val_records, test_records)
+        2) dataset 模式：records=None 且在 __init__ 里提供 dataset，返回 (train_indices, val_indices, test_indices)
+        """
+
+        if records is None:
+            if self.dataset is None:
+                raise ValueError("records is None and dataset was not provided")
+            return self._split_dataset(self.dataset, label_key=label_key)
+
+        return self._split_records(records, patient_id_key=patient_id_key, label_key=label_key)
+
+    def _split_records(
+        self,
         records: List[Dict],
         patient_id_key: str = "patient_id",
         label_key: str = "label"
     ) -> Tuple[List[Dict], List[Dict], List[Dict]]:
-        """
-        执行 patient-wise 划分。
-        
-        Args:
-            records: 记录列表，每个记录是包含 patient_id 和 label 的字典
-            patient_id_key: 患者 ID 的键名
-            label_key: 标签的键名
-            
-        Returns:
-            (train_records, val_records, test_records)
-        """
+        """records 模式：返回划分后的 records 列表。"""
         # 按患者分组
         patient_records = defaultdict(list)
         patient_labels = {}
@@ -123,6 +138,64 @@ class PatientSplitter:
         )
         
         return train_records, val_records, test_records
+
+    def _split_dataset(
+        self,
+        dataset: Any,
+        label_key: str = "label"
+    ) -> Tuple[List[int], List[int], List[int]]:
+        """dataset 模式：返回划分后的样本索引列表。"""
+        # Build per-sample metadata from common dataset shapes
+        samples: List[Dict[str, Any]] = []
+
+        if hasattr(dataset, "file_list"):
+            file_list = getattr(dataset, "file_list")
+            for idx, item in enumerate(file_list):
+                if isinstance(item, dict):
+                    record_id = item.get("record_id") or Path(item.get("wav_path", str(idx))).stem
+                    label = item.get(label_key, item.get("label", None))
+                else:
+                    record_id = Path(str(item)).stem
+                    label = None
+                samples.append({"index": idx, "record_id": record_id, "label": label})
+        elif hasattr(dataset, "file_paths"):
+            file_paths = getattr(dataset, "file_paths")
+            labels = getattr(dataset, "labels", None)
+            for idx, p in enumerate(file_paths):
+                record_id = Path(str(p)).stem
+                label = None
+                if isinstance(labels, dict):
+                    label = labels.get(record_id)
+                samples.append({"index": idx, "record_id": record_id, "label": label})
+        else:
+            # Fallback: rely on __len__ only
+            n = len(dataset)
+            for idx in range(n):
+                samples.append({"index": idx, "record_id": str(idx), "label": None})
+
+        # Group by patient
+        patient_to_indices: Dict[str, List[int]] = defaultdict(list)
+        patient_labels: Dict[str, int] = {}
+        for s in samples:
+            pid = self.extract_patient_id(str(s.get("record_id", "")))
+            patient_to_indices[pid].append(int(s["index"]))
+            if self.stratify and s.get("label") is not None and pid not in patient_labels:
+                try:
+                    patient_labels[pid] = int(s.get("label"))
+                except Exception:
+                    pass
+
+        patient_ids = list(patient_to_indices.keys())
+        if self.stratify and patient_labels:
+            train_pids, val_pids, test_pids = self._stratified_split(patient_ids, patient_labels)
+        else:
+            train_pids, val_pids, test_pids = self._random_split(patient_ids)
+
+        train_idx = [i for pid in train_pids for i in patient_to_indices[pid]]
+        val_idx = [i for pid in val_pids for i in patient_to_indices[pid]]
+        test_idx = [i for pid in test_pids for i in patient_to_indices[pid]]
+
+        return train_idx, val_idx, test_idx
     
     def _random_split(
         self,

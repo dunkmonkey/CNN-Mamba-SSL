@@ -53,6 +53,10 @@ def test_dual_stream_encoder():
     try:
         from src.models.encoders import DualStreamEncoder
         from src.models.heads import MLPProjectionHead
+
+        if not torch.cuda.is_available():
+            print("! CUDA not available; skipping DualStreamEncoder test (mamba-ssm ops require CUDA)")
+            return True
         
         # Create encoder
         encoder = DualStreamEncoder(
@@ -71,8 +75,10 @@ def test_dual_stream_encoder():
         
         # Test forward pass
         batch_size = 4
-        time_input = torch.randn(batch_size, 10000)  # 5s @ 2kHz
-        freq_input = torch.randn(batch_size, 64, 500)  # 64 mels, 500 frames
+        time_input = torch.randn(batch_size, 10000, device='cuda')  # 5s @ 2kHz
+        freq_input = torch.randn(batch_size, 64, 500, device='cuda')  # 64 mels, 500 frames
+
+        encoder = encoder.cuda()
         
         output = encoder(time_input, freq_input)
         
@@ -171,6 +177,10 @@ def test_bimamba():
     
     try:
         from src.models.encoders import BiMambaBlock
+
+        if not torch.cuda.is_available():
+            print("! CUDA not available; skipping BiMambaBlock test (mamba-ssm ops require CUDA)")
+            return True
         
         block = BiMambaBlock(
             d_model=128,
@@ -182,7 +192,8 @@ def test_bimamba():
         
         batch_size = 4
         seq_len = 625
-        x = torch.randn(batch_size, seq_len, 128)
+        x = torch.randn(batch_size, seq_len, 128, device='cuda')
+        block = block.cuda()
         
         output = block(x)
         

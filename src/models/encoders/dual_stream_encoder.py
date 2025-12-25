@@ -47,7 +47,9 @@ class DualStreamEncoder(nn.Module):
         freq_stream_config: Dict[str, Any],
         fusion_config: Optional[Dict[str, Any]] = None,
         projection_config: Optional[Dict[str, Any]] = None,
-        use_gap: bool = True
+        use_gap: bool = True,
+        projection_head: Optional[nn.Module] = None,
+        **kwargs
     ):
         """
         Args:
@@ -112,7 +114,12 @@ class DualStreamEncoder(nn.Module):
             self.gap = nn.AdaptiveAvgPool1d(1)
         
         # 投影头 (可选)
-        if projection_config is not None:
+        if projection_head is not None and projection_config is not None:
+            raise ValueError("Provide either projection_head or projection_config, not both")
+
+        if projection_head is not None:
+            self.projection = projection_head
+        elif projection_config is not None:
             proj_type = projection_config.get('type', 'mlp')
             if proj_type == 'mlp':
                 self.projection = MLPProjectionHead(

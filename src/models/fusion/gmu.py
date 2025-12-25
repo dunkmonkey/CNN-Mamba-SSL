@@ -100,7 +100,10 @@ class AdaptiveGatedFusion(nn.Module):
         freq_seq_len: int = 125,
         upsample_kernel: int = 5,
         fusion_mode: Literal["gmu", "concat", "add"] = "gmu",
-        dropout: float = 0.1
+        dropout: float = 0.1,
+        d_model: Optional[int] = None,
+        mode: Optional[str] = None,
+        **kwargs
     ):
         """
         Args:
@@ -111,6 +114,12 @@ class AdaptiveGatedFusion(nn.Module):
             fusion_mode: 融合模式 ("gmu", "concat", "add")
             dropout: Dropout 概率
         """
+        # Backward-compat aliases
+        if d_model is not None:
+            feature_dim = d_model
+        if mode is not None:
+            fusion_mode = mode  # type: ignore[assignment]
+
         super().__init__()
         
         self.feature_dim = feature_dim

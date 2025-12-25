@@ -6,10 +6,14 @@ Generates both time-domain audio and mel-spectrogram for dual-stream learning.
 
 import lightning as L
 from torch.utils.data import DataLoader, Subset
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 from omegaconf import DictConfig
 import torch
-import torchaudio.transforms as T
+
+try:
+    import torchaudio.transforms as T
+except ModuleNotFoundError:  # pragma: no cover
+    T = None
 
 from ..datasets.physionet_dataset import PhysioNetPCGDataset
 from ..datasets.augmentations import build_augmentation_pipeline
@@ -30,7 +34,7 @@ class DualModalTransform:
     def __init__(
         self,
         base_transform,
-        mel_transform: T.MelSpectrogram,
+        mel_transform: Any,
         apply_time_aug: bool = True,
         apply_freq_aug: bool = False,
         freq_aug_pipeline=None
@@ -171,6 +175,12 @@ class DualModalPretrainDataModule(L.LightningDataModule):
         self.seed = seed
         
         # Initialize mel transform
+        if T is None:
+            raise ModuleNotFoundError(
+                "torchaudio is required for DualModalPretrainDataModule but is not installed. "
+                "Install it with: pip install torchaudio"
+            )
+
         self.mel_transform = T.MelSpectrogram(
             sample_rate=target_sr,
             n_mels=n_mels,
