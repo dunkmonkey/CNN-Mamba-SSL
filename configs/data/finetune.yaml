@@ -3,7 +3,7 @@
 _target_: src.data.datamodules.finetune_datamodule.FinetuneDataModule
 
 # Dataset paths
-data_root: ${data_dir}/微调数据集
+data_root: /root/autodl-tmp
 target_sr: 4000
 segment_length: 5.0
 n_samples: 20000

@@ -20,6 +20,7 @@ import torch
 from torch.utils.data import Dataset
 import pickle
 from tqdm import tqdm
+from sklearn.model_selection import train_test_split
 
 
 class PhysioNetPCGDataset(Dataset):
@@ -262,15 +263,23 @@ class PhysioNetPCGDataset(Dataset):
                 if not hasattr(self, '_cached_data'):
                     with open(cache_file, 'rb') as f:
                         self._cached_data = pickle.load(f)
-                
+
                 item = self._cached_data[idx]
                 audio = item['audio'].copy()
-                label = item['label']
+
+                # Always recompute label from current label mapping if available
+                # to avoid stale labels stored in old cache files.
+                record_id = item.get('record_id')
+                label = None
+                if self.labels is not None and record_id in self.labels:
+                    label = self.labels[record_id]
+                elif 'label' in item:
+                    label = item['label']
             else:
                 # Load directly
                 file_info = self.file_list[idx]
                 audio = self._load_audio(file_info['wav_path'], file_info['hea_path'])
-                
+
                 # Get label
                 record_id = file_info['record_id']
                 label = None
@@ -282,7 +291,7 @@ class PhysioNetPCGDataset(Dataset):
             # Load directly
             file_info = self.file_list[idx]
             audio = self._load_audio(file_info['wav_path'], file_info['hea_path'])
-            
+
             # Get label
             record_id = file_info['record_id']
             label = None
@@ -313,34 +322,100 @@ def split_dataset(
     train_ratio: float = 0.8,
     val_ratio: float = 0.1,
     test_ratio: float = 0.1,
-    seed: int = 42
+    seed: int = 42,
+    stratify: bool = False
 ) -> Tuple[List[int], List[int], List[int]]:
-    """
-    Split dataset indices into train/val/test sets.
-    
+    """Split dataset indices into train/val/test sets.
+
+    By default this performs a random split. If ``stratify=True`` and the
+    dataset provides labels, a label-stratified split is performed so that
+    each split preserves the global class distribution as much as possible.
+
     Args:
         dataset: PhysioNetPCGDataset instance
         train_ratio: Fraction for training set
         val_ratio: Fraction for validation set
         test_ratio: Fraction for test set
         seed: Random seed for reproducibility
-        
+        stratify: Whether to perform label-stratified splitting
+
     Returns:
         Tuple of (train_indices, val_indices, test_indices)
     """
     assert abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-6, "Ratios must sum to 1.0"
-    
-    np.random.seed(seed)
+
     n_samples = len(dataset)
-    indices = np.random.permutation(n_samples)
-    
-    n_train = int(n_samples * train_ratio)
-    n_val = int(n_samples * val_ratio)
-    
-    train_indices = indices[:n_train].tolist()
-    val_indices = indices[n_train:n_train + n_val].tolist()
-    test_indices = indices[n_train + n_val:].tolist()
-    
-    print(f"Dataset split: Train={len(train_indices)}, Val={len(val_indices)}, Test={len(test_indices)}")
-    
+    indices = np.arange(n_samples)
+
+    if not stratify:
+        # Original random split behaviour
+        rng = np.random.RandomState(seed)
+        perm = rng.permutation(n_samples)
+
+        n_train = int(n_samples * train_ratio)
+        n_val = int(n_samples * val_ratio)
+
+        train_indices = perm[:n_train].tolist()
+        val_indices = perm[n_train:n_train + n_val].tolist()
+        test_indices = perm[n_train + n_val:].tolist()
+    else:
+        # Label-stratified split (used for supervised fine-tuning)
+        # Build label list for all indices
+        all_labels: List[int] = []
+        for idx in indices:
+            file_info = dataset.file_list[int(idx)]
+            record_id = file_info["record_id"]
+
+            label = None
+            if getattr(dataset, "labels", None) is not None and record_id in dataset.labels:
+                label = dataset.labels[record_id]
+            elif "label" in file_info:
+                label = file_info["label"]
+
+            if label is None:
+                raise ValueError(
+                    "Cannot perform stratified split because some samples have no label. "
+                    "Disable stratify or ensure all samples are labeled."
+                )
+
+            all_labels.append(label)
+
+        all_labels = np.array(all_labels)
+
+        # First split: train vs (val+test)
+        test_val_ratio = val_ratio + test_ratio
+        train_idx, temp_idx, _, temp_labels = train_test_split(
+            indices,
+            all_labels,
+            test_size=test_val_ratio,
+            random_state=seed,
+            stratify=all_labels
+        )
+
+        # Second split: val vs test from temp
+        # Proportion of test within (val+test)
+        if test_val_ratio == 0:
+            raise ValueError("val_ratio + test_ratio must be > 0 for stratified split")
+
+        test_size_within_temp = test_ratio / test_val_ratio
+        val_idx, test_idx, _, _ = train_test_split(
+            temp_idx,
+            temp_labels,
+            test_size=test_size_within_temp,
+            random_state=seed,
+            stratify=temp_labels
+        )
+
+        train_indices = train_idx.tolist()
+        val_indices = val_idx.tolist()
+        test_indices = test_idx.tolist()
+
+        # Optional: print label distribution for debugging
+        unique, counts = np.unique(all_labels, return_counts=True)
+        print("Global label distribution:", dict(zip(unique.tolist(), counts.tolist())))
+
+    print(
+        f"Dataset split: Train={len(train_indices)}, Val={len(val_indices)}, Test={len(test_indices)}"
+    )
+
     return train_indices, val_indices, test_indices

@@ -48,7 +48,11 @@ def compute_binary_metrics(
             metrics['auroc'] = 0.0
     
     # Confusion matrix components
-    tn, fp, fn, tp = confusion_matrix(targets, predictions).ravel()
+    cm = confusion_matrix(targets, predictions, labels=[0, 1])
+
+    # 保证始终是 2x2，即使某一类在本轮验证中不存在
+    tn, fp, fn, tp = cm.ravel()
+
     metrics['true_positives'] = int(tp)
     metrics['true_negatives'] = int(tn)
     metrics['false_positives'] = int(fp)
@@ -229,11 +233,11 @@ class MetricsTracker:
             targets: True class labels
             probs: Optional prediction probabilities
         """
-        self.predictions.extend(preds.cpu().numpy().tolist())
-        self.targets.extend(targets.cpu().numpy().tolist())
+        self.predictions.extend(preds.detach().cpu().numpy().tolist())
+        self.targets.extend(targets.detach().cpu().numpy().tolist())
         
         if probs is not None:
-            self.probabilities.extend(probs.cpu().numpy().tolist())
+            self.probabilities.extend(probs.detach().cpu().numpy().tolist())
     
     def compute(self, binary: bool = True) -> Dict[str, float]:
         """

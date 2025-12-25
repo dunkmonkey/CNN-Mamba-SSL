@@ -2,6 +2,7 @@
 # This uses Hydra's composition pattern to assemble config from multiple sources
 
 defaults:
+  - experiment: null
   - model: cnn_mamba
   - data: physionet2016
   - trainer: pretrain
@@ -13,7 +14,7 @@ defaults:
 seed: 42
 
 # Paths
-data_dir: ${oc.env:PWD}/dataset
+data_dir: "/root/autodl-tmp/PhysioNetCinC Challenge 2016 Database/"
 output_dir: ${oc.env:PWD}/outputs
 log_dir: ${oc.env:PWD}/logs
 

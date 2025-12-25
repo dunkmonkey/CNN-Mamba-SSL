@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, Subset
 from typing import Optional
 from omegaconf import DictConfig
 import torch
+import numpy as np
 
 from ..datasets.physionet_dataset import PhysioNetPCGDataset, split_dataset
 from ..datasets.augmentations import build_augmentation_pipeline
@@ -109,14 +110,35 @@ class FinetuneDataModule(L.LightningDataModule):
             return_label=True  # Return labels for supervised learning
         )
         
-        # Split dataset
+        # Split dataset with label stratification so that
+        # train/val/test all contain both classes when possible.
         train_indices, val_indices, test_indices = split_dataset(
             full_dataset,
             train_ratio=self.train_ratio,
             val_ratio=self.val_ratio,
             test_ratio=self.test_ratio,
-            seed=self.seed
+            seed=self.seed,
+            stratify=True
         )
+
+        # Debug: print label distribution for each split to verify stratification
+        def _print_split_stats(indices, name: str):
+            labels = []
+            for idx in indices:
+                item = full_dataset[idx]
+                # item can be (audio,) or (audio, label)
+                if isinstance(item, tuple) and len(item) == 2:
+                    labels.append(int(item[1]))
+            if len(labels) == 0:
+                print(f"{name} split has no labels available for statistics.")
+                return
+            unique, counts = np.unique(labels, return_counts=True)
+            dist = dict(zip(unique.tolist(), counts.tolist()))
+            print(f"{name} split label distribution:", dist)
+
+        _print_split_stats(train_indices, "Train")
+        _print_split_stats(val_indices, "Val")
+        _print_split_stats(test_indices, "Test")
         
         # Create subset datasets
         if stage == 'fit' or stage is None:
@@ -201,6 +223,9 @@ class TransformSubset:
             
             # Apply transform
             audio_aug = self.transform(audio_np)
-            audio_tensor = torch.FloatTensor(audio_aug).unsqueeze(0)
+            if isinstance(audio_aug, np.ndarray):
+                audio_aug = np.ascontiguousarray(audio_aug)
+
+            audio_tensor = torch.tensor(audio_aug, dtype=torch.float32).unsqueeze(0)
         
         return audio_tensor, label_tensor
