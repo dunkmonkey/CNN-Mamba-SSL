@@ -1,0 +1,103 @@
+# No-Pretraining Ablation Experiment
+# 无预训练消融实验：直接监督学习基线对比
+# 
+# 实验目的：对比无预训练情况下CNN-only, Mamba-only, CNN-Mamba的分类性能
+# 
+# 使用方法：
+#   批量运行三个消融实验（使用Hydra多配置扫描）:
+#     python scripts/train_finetune.py experiment=exp003_no_pretrain_ablation -m model=cnn_only,mamba_only,cnn_mamba
+#   
+#   单独运行：
+#     python scripts/train_finetune.py experiment=exp003_no_pretrain_ablation model=cnn_only
+#     python scripts/train_finetune.py experiment=exp003_no_pretrain_ablation model=mamba_only
+#     python scripts/train_finetune.py experiment=exp003_no_pretrain_ablation model=cnn_mamba
+
+# @package _global_
+
+defaults:
+  - override /data: finetune
+  - override /trainer: finetune
+  - override /optimizer: adam
+  - override /augmentation: pcg_augmentations
+
+# ============================================================================
+# 实验标识
+# ============================================================================
+experiment_name: exp003_no_pretrain_ablation
+
+# ============================================================================
+# 关键设置：不使用预训练权重
+# ============================================================================
+# 设置为 null 表示从随机初始化开始训练
+pretrained_encoder: null
+
+# ============================================================================
+# 训练策略：从头训练需要全参数更新
+# ============================================================================
+trainer:
+  # 使用全参数微调策略
+  finetune_strategy: full
+  freeze_encoder: false  # 从头训练必须为false
+  
+  # 关键：从头训练时encoder学习率应与分类头相同
+  # 预训练微调时为0.01，从头训练时设为1.0
+  encoder_lr_multiplier: 1.0
+  
+  trainer:
+    # 从头训练需要更多epochs来达到收敛
+    max_epochs: 120
+    
+    # 性能优化
+    precision: 16-mixed
+    gradient_clip_val: 1.0
+    
+  callbacks:
+    model_checkpoint:
+      monitor: val_acc
+      mode: max
+      save_top_k: 3
+      save_last: true
+      filename: "no_pretrain-{epoch:03d}-val_acc={val_acc:.4f}"
+      auto_insert_metric_name: false
+      
+    early_stopping:
+      monitor: val_acc
+      mode: max
+      patience: 20  # 从头训练收敛较慢，增加耐心值
+      min_delta: 0.001
+      
+    lr_monitor:
+      logging_interval: step
+
+  logger:
+    tensorboard:
+      save_dir: ${log_dir}
+      name: no_pretrain_ablation
+      version: null
+      default_hp_metric: false
+
+# ============================================================================
+# 数据配置
+# ============================================================================
+data:
+  batch_size: 32
+  
+  # 开启数据增强防止过拟合（从头训练更容易过拟合）
+  use_augmentation: true
+
+# ============================================================================
+# 优化器配置
+# ============================================================================
+optimizer:
+  lr: 0.001  # 初始学习率
+  weight_decay: 1.0e-4  # L2正则化
+  
+  scheduler:
+    _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+    T_max: 120  # 与max_epochs一致
+    eta_min: 1.0e-6
+
+# ============================================================================
+# 可复现性设置
+# ============================================================================
+seed: 42
